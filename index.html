@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <link rel="manifest" href="manifest.json" />
+    <title>Kid Biz Tracker</title>
+    <script>
+      if ("serviceWorker" in navigator) {
+        window.addEventListener("load", () => {
+          navigator.serviceWorker
+            .register("/handykids/service-worker.js")
+            .then((registration) => {
+              console.log(
+                "Service Worker registered with scope:",
+                registration.scope
+              );
+            })
+            .catch((error) => {
+              console.error("Service Worker registration failed:", error);
+            });
+        });
+      }
+    </script>
+    <style>
+      body {
+        margin: 0;
+        font-family: sans-serif;
+        background: #f5f5f5;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        height: 100vh;
+      }
+
+      .header {
+        width: 100%;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 15px 20px;
+        box-sizing: border-box;
+        background: #fff;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+      }
+
+      .logo {
+        font-weight: bold;
+        font-size: 1.3rem;
+        text-align: center;
+        flex-grow: 1;
+      }
+
+      .settings-btn {
+        font-size: 1.5rem;
+        background: none;
+        border: none;
+        cursor: pointer;
+      }
+
+      .container {
+        width: 90%;
+        max-width: 400px;
+        text-align: center;
+        margin-top: 40px;
+      }
+
+      h1 {
+        font-size: 1.3rem;
+        margin-bottom: 10px;
+      }
+
+      .progress-bar {
+        height: 30px;
+        background-color: #ddd;
+        border-radius: 20px;
+        overflow: hidden;
+        margin: 20px 0 10px;
+      }
+
+      .progress {
+        height: 100%;
+        width: 0%;
+        background-color: #4caf50;
+        transition: width 0.3s ease;
+      }
+
+      .progress.debt {
+        background-color: #f44336; /* red */
+      }
+
+      .info-text {
+        font-size: 0.9rem;
+        color: #333;
+        margin-bottom: 20px;
+      }
+
+      .buttons {
+        display: flex;
+        justify-content: center;
+        gap: 40px;
+      }
+
+      .buttons button {
+        font-size: 2rem;
+        width: 60px;
+        height: 60px;
+        border: none;
+        border-radius: 50%;
+        background: #007bff;
+        color: white;
+        cursor: pointer;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+      }
+
+      .modal {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.5);
+        display: none;
+        justify-content: center;
+        align-items: center;
+      }
+
+      .modal-content {
+        background: white;
+        padding: 20px;
+        border-radius: 10px;
+        text-align: center;
+        width: 80%;
+      }
+
+      .modal-content input {
+        font-size: 1.2rem;
+        width: 80%;
+        padding: 10px;
+        margin: 10px 0;
+      }
+
+      .modal-content button {
+        padding: 10px 20px;
+        margin-top: 10px;
+      }
+
+      button svg {
+        height: 30px;
+        width: 30px;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Header -->
+    <div class="header">
+      <div style="width: 42px"></div>
+      <!-- Spacer -->
+      <div class="logo">HandyKid Services</div>
+      <button class="settings-btn" onclick="openGoalModal()">
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          height="24px"
+          viewBox="0 -960 960 960"
+          width="24px"
+          fill="#000"
+        >
+          <path
+            d="M560-440q-50 0-85-35t-35-85q0-50 35-85t85-35q50 0 85 35t35 85q0 50-35 85t-85 35ZM280-320q-33 0-56.5-23.5T200-400v-320q0-33 23.5-56.5T280-800h560q33 0 56.5 23.5T920-720v320q0 33-23.5 56.5T840-320H280Zm80-80h400q0-33 23.5-56.5T840-480v-160q-33 0-56.5-23.5T760-720H360q0 33-23.5 56.5T280-640v160q33 0 56.5 23.5T360-400Zm440 240H120q-33 0-56.5-23.5T40-240v-440h80v440h680v80ZM280-400v-320 320Z"
+          />
+        </svg>
+      </button>
+    </div>
+
+    <div class="container">
+      <h1>
+        Goal: $<span id="goal">100</span> | Saved: $<span id="saved">0</span>
+      </h1>
+      <div class="progress-bar">
+        <div class="progress" id="progress"></div>
+      </div>
+      <p class="info-text" id="infoText">0% saved — $100.00 left to go</p>
+      <div class="buttons">
+        <button onclick="openModal('add')">+</button>
+        <button onclick="openModal('subtract')">−</button>
+      </div>
+    </div>
+
+    <!-- Amount modal -->
+    <div class="modal" id="modal">
+      <div class="modal-content">
+        <h2 id="modalTitle">Enter amount</h2>
+        <input type="number" id="amount" placeholder="$0.00" />
+        <br />
+        <button onclick="submitAmount()">Submit</button>
+      </div>
+    </div>
+
+    <!-- Goal modal -->
+    <div class="modal" id="goalModal">
+      <div class="modal-content">
+        <h2>Set New Goal</h2>
+        <input type="number" id="newGoal" placeholder="$100" />
+        <br />
+        <button onclick="submitNewGoal()">Update Goal</button>
+      </div>
+    </div>
+
+    <div
+      id="imageSection"
+      style="margin-top: auto; padding: 20px; text-align: center"
+    >
+      <img
+        id="bottomImage"
+        src="https://images.footballfanatics.com/minnesota-timberwolves/minnesota-timberwolves-jordan-statement-edition-swingman-jersey-gray-anthony-edwards-unisex_ss5_p-13363753+pv-1+u-jeskdxcx68sxsjm33z8l+v-nptavvybzezhdsyeyziy.jpg?_hv=2&w=900"
+        alt="Custom"
+        style="
+          max-width: 300px;
+          height: auto;
+          border-radius: 10px;
+          cursor: pointer;
+        "
+        onclick="changeImage()"
+      />
+      <p style="font-size: 0.8rem; color: #555">Tap image to change</p>
+    </div>
+
+    <script>
+      function changeImage() {
+        const newUrl = prompt("Enter a new image URL:");
+        if (newUrl && newUrl.trim() !== "") {
+          document.getElementById("bottomImage").src = newUrl.trim();
+        }
+      }
+    </script>
+
+    <!-- Confetti -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+    <script>
+      let goal = 100;
+      let saved = 0;
+      let mode = "add";
+
+      const progressEl = document.getElementById("progress");
+      const savedEl = document.getElementById("saved");
+      const goalEl = document.getElementById("goal");
+      const infoText = document.getElementById("infoText");
+      const modal = document.getElementById("modal");
+      const goalModal = document.getElementById("goalModal");
+      const amountInput = document.getElementById("amount");
+      const newGoalInput = document.getElementById("newGoal");
+
+      function openModal(action) {
+        mode = action;
+        document.getElementById("modalTitle").textContent =
+          action === "add" ? "Add Amount" : "Subtract Amount";
+        amountInput.value = "";
+        modal.style.display = "flex";
+        amountInput.focus();
+      }
+
+      function openGoalModal() {
+        newGoalInput.value = goal;
+        goalModal.style.display = "flex";
+        newGoalInput.focus();
+      }
+
+      function submitAmount() {
+        const amount = parseFloat(amountInput.value);
+        if (!isNaN(amount) && amount > 0) {
+          saved += mode === "add" ? amount : -amount;
+          updateProgress();
+        }
+        modal.style.display = "none";
+      }
+
+      function submitNewGoal() {
+        const newGoal = parseFloat(newGoalInput.value);
+        if (!isNaN(newGoal) && newGoal > 0) {
+          goal = newGoal;
+          saved = 0;
+          goalEl.textContent = goal;
+          updateProgress();
+        }
+        goalModal.style.display = "none";
+      }
+
+      function updateProgress() {
+        const percent = (saved / goal) * 100;
+        const displayPercent = Math.min(Math.max(percent, 0), 100);
+        const remaining = goal - saved;
+        savedEl.textContent = saved.toFixed(2);
+
+        if (saved >= 0) {
+          progressEl.style.width = displayPercent + "%";
+          progressEl.classList.remove("debt");
+          if (saved < goal) {
+            infoText.textContent = `${percent.toFixed(0)}% saved — $${(
+              goal - saved
+            ).toFixed(2)} left to go`;
+          } else {
+            infoText.textContent = `Goal reached! 🎉`;
+            fireConfetti();
+          }
+        } else {
+          progressEl.style.width = "100%";
+          progressEl.classList.add("debt");
+          infoText.textContent = `In debt — $${Math.abs(saved).toFixed(
+            2
+          )} below zero`;
+        }
+
+        goalEl.textContent = goal;
+      }
+
+      function fireConfetti() {
+        confetti({
+          particleCount: 150,
+          spread: 100,
+          origin: { y: 0.6 },
+        });
+      }
+
+      window.addEventListener("click", (e) => {
+        if (e.target === modal) modal.style.display = "none";
+        if (e.target === goalModal) goalModal.style.display = "none";
+      });
+
+      updateProgress();
+    </script>
+  </body>
+</html>

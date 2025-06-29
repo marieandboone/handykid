@@ -1,0 +1,27 @@
+{
+  "theme_color": "#f5f5f5",
+  "background_color": "#f5f5f5",
+  "icons": [
+    {
+      "purpose": "maskable",
+      "sizes": "512x512",
+      "src": "icon.png",
+      "type": "image/png"
+    },
+    {
+      "purpose": "any",
+      "sizes": "512x512",
+      "src": "icon.png",
+      "type": "image/png"
+    }
+  ],
+  "orientation": "portrait",
+  "display": "standalone",
+  "dir": "auto",
+  "lang": "en-US",
+  "name": "HandyKid",
+  "short_name": "Hk",
+  "start_url": "/handykid/",
+  "scope": "/handykid/",
+  "description": "Daxton's Handykid Services"
+}
