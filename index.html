@@ -148,6 +148,14 @@
         height: 30px;
         width: 30px;
       }
+
+      button.add {
+        background-color: #4caf50;
+      }
+
+      button.subtract {
+        background-color: #f44336;
+      }
     </style>
   </head>
   <body>
@@ -180,8 +188,8 @@
       </div>
       <p class="info-text" id="infoText">0% saved — $100.00 left to go</p>
       <div class="buttons">
-        <button onclick="openModal('add')">+</button>
-        <button onclick="openModal('subtract')">−</button>
+        <button class="add" onclick="openModal('add')">+</button>
+        <button class="subtract" onclick="openModal('subtract')">−</button>
       </div>
     </div>
 
@@ -225,11 +233,37 @@
     </div>
 
     <script>
+      function loadFromStorage() {
+        const storedGoal = parseFloat(localStorage.getItem("goalAmount"));
+        const storedSaved = parseFloat(localStorage.getItem("savedAmount"));
+        const storedImage = localStorage.getItem("imageURL");
+
+        if (!isNaN(storedGoal)) {
+          goal = storedGoal;
+          goalEl.textContent = goal;
+        }
+
+        if (!isNaN(storedSaved)) {
+          saved = storedSaved;
+          savedEl.textContent = saved.toFixed(2);
+        }
+
+        if (storedImage) {
+          document.getElementById("bottomImage").src = storedImage;
+        }
+
+        updateProgress();
+      }
+
       function changeImage() {
         const newUrl = prompt("Enter a new image URL:");
         if (newUrl && newUrl.trim() !== "") {
           document.getElementById("bottomImage").src = newUrl.trim();
         }
+        localStorage.setItem(
+          "imageURL",
+          document.getElementById("bottomImage").src
+        );
       }
     </script>
 
@@ -272,6 +306,7 @@
           updateProgress();
         }
         modal.style.display = "none";
+        localStorage.setItem("savedAmount", saved);
       }
 
       function submitNewGoal() {
@@ -283,6 +318,8 @@
           updateProgress();
         }
         goalModal.style.display = "none";
+        localStorage.setItem("goalAmount", goal);
+        localStorage.setItem("savedAmount", saved); // reset saved to 0, so re-save
       }
 
       function updateProgress() {
@@ -326,7 +363,7 @@
         if (e.target === goalModal) goalModal.style.display = "none";
       });
 
-      updateProgress();
+      loadFromStorage();
     </script>
   </body>
 </html>
